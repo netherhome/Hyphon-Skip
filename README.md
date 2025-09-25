@@ -4,6 +4,7 @@ like tinder, but without the dating part!
 
 
 ---------------------- INTRUCTIONS ---------------------
+
 On your Chromebook, click the green code button above then press download ZIP.
 
 Once its downloaded, open the file and double click on Hyphon-Skip main, then double click
