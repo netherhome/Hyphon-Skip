@@ -2,283 +2,250 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hyphon Skip</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
-body { margin:0; font-family:'Quicksand', sans-serif; background:white; text-align:center; overflow-x:hidden; }
-h1,h2,h3,h4,h5,h6 { margin:0; }
-button { cursor:pointer; border:none; border-radius:15px; padding:15px 25px; font-weight:700; transition: transform 0.2s; }
-button:hover { transform: scale(1.05); }
-.hidden { display:none; }
-
-/* Logo */
-#logo { font-size:2.5em; margin:20px; }
-#logo .white { color:white; background:black; padding:0 10px; border-radius:5px; }
-#logo .red { color:red; }
-
-/* Top nav always visible */
-nav { display:flex; justify-content:center; margin-bottom:10px; position:sticky; top:0; background:white; z-index:1000; padding:10px; }
-nav button { margin:0 10px; background:#74c0fc; color:white; font-size:1em; }
-
-/* Login */
-#loginScreen { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; animation: fadeIn 0.5s; }
-#loginScreen input { padding:15px; margin:5px 0; font-size:1em; width:250px; border-radius:12px; border:1px solid #ccc; }
-#loginScreen button { background: #ff4d4d; color:white; font-size:1.2em; width:200px; }
-
-/* Main menu */
-#mainMenu { padding:20px; display:none; animation: fadeIn 0.5s; }
-.menu-btn { display:block; margin:20px auto; background:linear-gradient(45deg, #ff6b6b, #f06595); color:white; font-size:1.5em; width:80%; max-width:400px; }
-#cardList { max-height:300px; overflow-y:auto; margin-top:20px; }
-.card { border-radius:15px; padding:15px; margin:10px auto; max-width:400px; background:#f0f0f0; box-shadow:0 4px 6px rgba(0,0,0,0.1); position:relative; transition:0.4s; }
-.card img, .card video, .card audio { max-width:100%; border-radius:10px; margin-top:10px; }
-
-/* Swipe card screen */
-#swipeScreen { display:none; margin-top:10px; }
-#swipeCardContainer { position:relative; margin:0 auto; width:90%; max-width:500px; height:60vh; display:flex; align-items:center; justify-content:center; }
-#swipeCardContainer .swipeCard { position:absolute; width:100%; height:auto; padding:20px; background:#fff; border-radius:20px; box-shadow:0 6px 15px rgba(0,0,0,0.2); font-size:1.5em; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; transition:0.3s; }
-.swipeCard img, .swipeCard video, .swipeCard audio { max-width:100%; margin-top:15px; border-radius:12px; }
-
-/* Swipe buttons */
-#swipeButtons { display:flex; justify-content:center; margin-top:10px; }
-.swipe-btn { font-size:2em; width:45%; margin:5px; padding:20px; font-weight:700; border-radius:20px; transition: transform 0.2s; }
-.swipe-btn:hover { transform:scale(1.05); }
-.like-btn { background:green; color:white; }
-.pass-btn { background:red; color:white; }
-
-/* Boost sparkle */
-.boosted { position:relative; }
-.boosted::after {
-  content:'✨'; position:absolute; top:-10px; right:-10px; font-size:1.5em; animation: sparkle 1s infinite alternate;
-}
-@keyframes sparkle { 0%{opacity:0.5;} 50%{opacity:1; transform:rotate(15deg);} 100%{opacity:0.5;} }
-
-/* Quests */
-#questsScreen { max-width:500px; margin:0 auto; display:none; }
-.questPath { margin:15px 0; padding:10px; background:#ffe066; border-radius:10px; }
-.quest { margin:5px 0; font-weight:600; }
-
-/* Coins */
-#coinsDisplay { font-weight:700; margin-top:10px; }
-
-/* Animations */
-@keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
-@keyframes slideRight { 0%{transform:translateX(0);opacity:1;} 100%{transform:translateX(500px);opacity:0;} }
-@keyframes slideLeft { 0%{transform:translateX(0);opacity:1;} 100%{transform:translateX(-500px);opacity:0;} }
+  body { font-family:'Poppins',sans-serif; background:#fafafa; margin:0; padding:0; }
+  h1 { text-align:center; margin:20px; font-size:2em; }
+  h1 span { color:red; }
+  .hidden { display:none; }
+  #navbar { position:fixed; top:0; left:0; right:0; background:#222; color:white; display:flex; justify-content:space-around; padding:10px; }
+  #navbar button { background:none; border:none; color:white; font-size:1em; cursor:pointer; }
+  #content { margin-top:60px; padding:20px; text-align:center; }
+  button { padding:15px; font-size:1.2em; margin:10px; border:none; border-radius:10px; cursor:pointer; }
+  #loginBtn { background:#4CAF50; color:white; }
+  #boostBtn { background:#ff69b4; color:white; }
+  #passBtn { flex:1; margin:5px; padding:40px; background:#e74c3c; color:white; font-size:1.5em; }
+  #likeBtn { flex:1; margin:5px; padding:40px; background:#2ecc71; color:white; font-size:1.5em; }
+  #swipeControls { display:flex; justify-content:space-between; margin-top:20px; }
+  .card,.swipeCard { border:1px solid #ccc; border-radius:15px; padding:15px; margin:15px auto; max-width:400px; background:white; box-shadow:0 4px 8px rgba(0,0,0,0.1); }
+  .quest { border:1px solid #ccc; border-radius:10px; padding:10px; margin:10px auto; max-width:400px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.1); text-align:left; }
+  .quest.completed { background:#d4edda; }
 </style>
 </head>
 <body>
 
-<div id="logo"><span class="white">Hyphon</span> <span class="red">Skip</span></div>
+<h1>Hyphon <span>Skip</span></h1>
 
-<!-- Login -->
-<div id="loginScreen">
-  <input type="text" id="usernameInput" placeholder="Username"><br>
-  <button id="loginBtn">Login</button>
+<div id="navbar" class="hidden">
+  <button onclick="showMenu()">🏠 Home</button>
+  <button onclick="openCreate()">➕ Create</button>
+  <button onclick="startSwipe()">🎴 Swipe</button>
+  <button onclick="openQuests()">⭐ Quests</button>
 </div>
 
-<!-- Main menu -->
-<div id="mainMenu">
-  <button class="menu-btn" onclick="showCreateCard()">Create Card</button>
-  <div id="coinsDisplay">Coins: 0</div>
-  <div id="cardList"></div>
-</div>
+<div id="content">
 
-<!-- Create card -->
-<div id="createCardScreen" style="display:none; padding:20px;">
-  <h2>Create a Card</h2>
-  <textarea id="cardText" placeholder="Write something..." rows="3" style="width:80%; padding:10px; border-radius:12px; border:1px solid #ccc;"></textarea><br>
-  <input type="file" id="mediaInput" accept="image/*,video/*,audio/*"><br><br>
-  <button onclick="addCard(false)">Add Card</button>
-  <button onclick="addCard(true)">Add & Boost (1 coin) ✨</button>
-</div>
-
-<!-- Swipe cards -->
-<div id="swipeScreen">
-  <div id="swipeCardContainer"></div>
-  <div id="swipeButtons">
-    <button class="swipe-btn pass-btn" onclick="swipe('pass')">Pass ❌</button>
-    <button class="swipe-btn like-btn" onclick="swipe('like')">Like ✅</button>
+  <!-- LOGIN -->
+  <div id="loginScreen">
+    <input id="usernameInput" placeholder="Enter username">
+    <button id="loginBtn">Login</button>
   </div>
+
+  <!-- MENU -->
+  <div id="mainMenu" class="hidden">
+    <p id="coinsDisplay">Coins: 0</p>
+    <div id="myCards"></div>
+  </div>
+
+  <!-- CREATE -->
+  <div id="createCardScreen" class="hidden">
+    <textarea id="cardText" placeholder="Write your card..." style="width:90%;height:80px;"></textarea><br>
+    <input type="file" id="mediaInput"><br>
+    <button onclick="addCard(false)">Add Card</button>
+    <button onclick="addCard(true)" id="boostBtn">Add & Boost (1 coin)</button>
+  </div>
+
+  <!-- SWIPE -->
+  <div id="swipeScreen" class="hidden">
+    <div id="swipeContainer"></div>
+    <div id="swipeControls">
+      <button id="passBtn" onclick="swipe(false)">Pass</button>
+      <button id="likeBtn" onclick="swipe(true)">Like!</button>
+    </div>
+  </div>
+
+  <!-- QUESTS -->
+  <div id="questScreen" class="hidden">
+    <h2>Quests</h2>
+    <div id="quests"></div>
+  </div>
+
 </div>
 
-<!-- Quests -->
-<div id="questsScreen">
-  <h2>Quests</h2>
-  <div id="questsContainer"></div>
-</div>
-
-<!-- Top nav -->
-<nav>
-  <button onclick="showMenu()">Home</button>
-  <button onclick="showQuests()">Quests</button>
-  <button onclick="startSwipe()">Scroll Cards</button>
-</nav>
-
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script>
-let username='';
-let users=JSON.parse(localStorage.getItem('users')||'{}');
-let currentCards=[];
-let coins=0;
-
-/* ---------- LOGIN ---------- */
-document.getElementById('loginBtn').addEventListener('click', function(){
-  let input=document.getElementById('usernameInput').value.trim();
-  if(!input) return alert('Enter a username!');
-  username=input;
-  if(!users[username]) users[username]={cards:[], coins:0};
-  currentCards=users[username].cards;
-  coins=users[username].coins||0;
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('mainMenu').style.display='block';
-  renderCards();
-  document.getElementById('coinsDisplay').innerText='Coins: '+coins;
-});
-
-/* ---------- SAVE USER ---------- */
-function saveUser(){
-  users[username]={cards:currentCards, coins:coins};
-  localStorage.setItem('users', JSON.stringify(users));
-}
-
-/* ---------- MENU ---------- */
-function showMenu(){
-  document.getElementById('mainMenu').style.display='block';
-  document.getElementById('createCardScreen').style.display='none';
-  document.getElementById('swipeScreen').style.display='none';
-  document.getElementById('questsScreen').style.display='none';
-  renderCards();
-  document.getElementById('coinsDisplay').innerText='Coins: '+coins;
-}
-
-/* ---------- CREATE CARD ---------- */
-function showCreateCard(){
-  document.getElementById('mainMenu').style.display='none';
-  document.getElementById('createCardScreen').style.display='block';
-}
-
-function addCard(boost){
-  let text=document.getElementById('cardText').value.trim();
-  if(!text) return alert('Write something!');
-  if(boost && coins<1) { alert('Not enough coins!'); boost=false; }
-  let file=document.getElementById('mediaInput').files[0];
-  let reader=new FileReader();
-  reader.onload=function(e){
-    let media=file?{type:file.type, src:e.target.result}:null;
-    let card = {text, media, likes:0, views:0, skipped:0, boosted:boost};
-    currentCards.push(card);
-    if(boost) { coins--; alert('Card boosted!'); }
-    saveUser();
-    document.getElementById('cardText').value='';
-    document.getElementById('mediaInput').value='';
-    updateQuests();
-    showMenu();
+  const firebaseConfig = {
+    apiKey: "AIzaSyBnxa5QbhfrD_8LTrZbrmjI5wVRKHSXGLg",
+    authDomain: "gartictwo.firebaseapp.com",
+    databaseURL: "https://gartictwo-default-rtdb.firebaseio.com",
+    projectId: "gartictwo",
+    storageBucket: "gartictwo.firebasestorage.app",
+    messagingSenderId: "602694382683",
+    appId: "1:602694382683:web:1dc11cb6b715944ba0fb7e"
   };
-  if(file) reader.readAsDataURL(file);
-  else reader.onload();
-}
+  firebase.initializeApp(firebaseConfig);
+  const db=firebase.database();
 
-/* ---------- RENDER CARDS ---------- */
-function renderCards(){
-  let list=document.getElementById('cardList');
-  list.innerHTML='';
-  currentCards.forEach((c,i)=>{
-    let div=document.createElement('div');
-    div.className='card'+(c.boosted?' boosted':'');
-    div.innerHTML=`<strong>Card ${i+1}:</strong> ${c.text}<div class="stats">Likes: ${c.likes} | Views: ${c.views} | Ratio: ${(c.likes/(c.skipped+1)).toFixed(2)}</div>`;
-    if(c.media){
-      if(c.media.type.startsWith('image')) div.innerHTML+=`<img src="${c.media.src}">`;
-      else if(c.media.type.startsWith('video')) div.innerHTML+=`<video controls src="${c.media.src}"></video>`;
-      else if(c.media.type.startsWith('audio')) div.innerHTML+=`<audio controls src="${c.media.src}"></audio>`;
+  let username=null, coins=0, swipeQueue=[], currentSwipeCard=null;
+
+  const questsConfig = {
+    cards: [
+      {id:"c10", goal:10, reward:1},
+      {id:"c25", goal:25, reward:2},
+      {id:"c50", goal:50, reward:5},
+      {id:"c100", goal:100, reward:10},
+      {id:"c250", goal:250, reward:25},
+    ],
+    likes: [
+      {id:"l5", goal:5, reward:1},
+      {id:"l10", goal:10, reward:2},
+      {id:"l30", goal:30, reward:5},
+      {id:"l50", goal:50, reward:10},
+      {id:"l100", goal:100, reward:20},
+      {id:"l500", goal:500, reward:100},
+    ],
+    views: [
+      {id:"v10", goal:10, reward:1},
+      {id:"v40", goal:40, reward:2},
+      {id:"v50", goal:50, reward:5},
+      {id:"v200", goal:200, reward:10},
+      {id:"v500", goal:500, reward:25},
+    ]
+  };
+
+  document.getElementById("loginBtn").onclick=()=>{
+    let u=document.getElementById("usernameInput").value.trim();
+    if(!u) return alert("Enter username!");
+    username=u;
+    db.ref("users/"+username).once("value").then(snap=>{
+      if(!snap.exists()){ db.ref("users/"+username).set({coins:0,quests:{}}); }
+    });
+    loadUser();
+    showMenu();
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("navbar").classList.remove("hidden");
+  };
+
+  function loadUser(){
+    db.ref("users/"+username).on("value",snap=>{
+      let data=snap.val(); if(!data) return;
+      coins=data.coins||0;
+      renderCards(data.cards||{});
+      document.getElementById("coinsDisplay").innerText="Coins: "+coins;
+    });
+  }
+
+  function hideAll(){ document.querySelectorAll("#mainMenu,#createCardScreen,#swipeScreen,#questScreen").forEach(el=>el.classList.add("hidden")); }
+  function showMenu(){ hideAll(); document.getElementById("mainMenu").classList.remove("hidden"); }
+  function openCreate(){ hideAll(); document.getElementById("createCardScreen").classList.remove("hidden"); }
+  function openQuests(){ hideAll(); document.getElementById("questScreen").classList.remove("hidden"); loadQuests(); }
+
+  function renderCards(cards){
+    let div=document.getElementById("myCards");
+    div.innerHTML="<h3>My Cards</h3>";
+    for(let id in cards){
+      let c=cards[id];
+      div.innerHTML+=`
+        <div class="card">
+          <p>${c.text} ${c.boosted?"✨":""}</p>
+          <p>Likes: ${c.likes||0}, Views: ${c.views||0}</p>
+        </div>`;
     }
-    list.appendChild(div);
-  });
-}
+  }
 
-/* ---------- SWIPE ---------- */
-let swipeQueue=[];
-let currentSwipeCard=null;
+  function addCard(boost){
+    let text=document.getElementById("cardText").value.trim();
+    if(!text) return alert("Write something!");
+    if(boost && coins<1){ alert("Not enough coins!"); return; }
+    let file=document.getElementById("mediaInput").files[0];
+    let reader=new FileReader();
+    reader.onload=function(e){
+      let media=file?{type:file.type,src:e.target.result}:null;
+      let card={text,media,likes:0,views:0,skipped:0,boosted:boost};
+      db.ref("users/"+username+"/cards").push(card);
+      if(boost){ coins--; db.ref("users/"+username+"/coins").set(coins); }
+      document.getElementById("cardText").value="";
+      document.getElementById("mediaInput").value="";
+      showMenu();
+    };
+    if(file) reader.readAsDataURL(file); else reader.onload();
+  }
 
-function startSwipe(){
-  document.getElementById('mainMenu').style.display='none';
-  document.getElementById('createCardScreen').style.display='none';
-  document.getElementById('swipeScreen').style.display='block';
-  swipeQueue=[];
-  for(let u in users){
-    if(u===username) continue;
-    users[u].cards.forEach(c=>{
-      if(!c.seenBy) c.seenBy=[];
-      if(!c.seenBy.includes(username)){
-        let cardCopy={...c, owner:u};
-        if(c.boosted) swipeQueue.unshift(cardCopy);
-        else swipeQueue.push(cardCopy);
+  function startSwipe(){
+    hideAll(); document.getElementById("swipeScreen").classList.remove("hidden");
+    swipeQueue=[];
+    db.ref("users").once("value").then(snap=>{
+      let all=snap.val()||{};
+      for(let u in all){
+        if(u===username) continue;
+        let cards=all[u].cards||{};
+        for(let id in cards){
+          let c=cards[id]; if(!c) continue;
+          let seen=(c.seenBy||[]);
+          if(!seen.includes(username)){
+            let copy={...c,owner:u,cardId:id};
+            if(c.boosted) swipeQueue.unshift(copy);
+            else swipeQueue.push(copy);
+          }
+        }
       }
+      showNextCard();
     });
   }
-  showNextCard();
-}
 
-function showNextCard(){
-  let container=document.getElementById('swipeCardContainer');
-  container.innerHTML='';
-  if(swipeQueue.length===0){ container.innerHTML='No more cards!'; return; }
-  currentSwipeCard=swipeQueue.shift();
-  currentSwipeCard.views++;
-  saveUser();
-
-  let div=document.createElement('div');
-  div.className='swipeCard'+(currentSwipeCard.boosted?' boosted':'');
-  div.innerHTML=`<p>${currentSwipeCard.text}</p>`;
-  if(currentSwipeCard.media){
-    if(currentSwipeCard.media.type.startsWith('image')) div.innerHTML+=`<img src="${currentSwipeCard.media.src}">`;
-    else if(currentSwipeCard.media.type.startsWith('video')) div.innerHTML+=`<video controls src="${currentSwipeCard.media.src}"></video>`;
-    else if(currentSwipeCard.media.type.startsWith('audio')) div.innerHTML+=`<audio controls src="${currentSwipeCard.media.src}"></audio>`;
+  function showNextCard(){
+    let div=document.getElementById("swipeContainer");
+    div.innerHTML="";
+    if(swipeQueue.length===0){ div.innerHTML="<p>No more cards!</p>"; currentSwipeCard=null; return; }
+    currentSwipeCard=swipeQueue.shift();
+    div.innerHTML=`<div class="swipeCard"><p>${currentSwipeCard.text} ${currentSwipeCard.boosted?"✨":""}</p></div>`;
+    db.ref("users/"+currentSwipeCard.owner+"/cards/"+currentSwipeCard.cardId+"/views").transaction(v=>(v||0)+1);
   }
-  container.appendChild(div);
-}
 
-/* ---------- Swipe buttons ---------- */
-function swipe(action){
-  if(!currentSwipeCard) return;
-  let div=document.querySelector('#swipeCardContainer .swipeCard');
-  if(action==='like'){ currentSwipeCard.likes++; coins++; div.style.animation='slideRight 0.4s forwards'; }
-  else { currentSwipeCard.skipped++; div.style.animation='slideLeft 0.4s forwards'; }
-  setTimeout(()=>{ showNextCard(); document.getElementById('coinsDisplay').innerText='Coins: '+coins; saveUser(); },400);
-}
+  function swipe(like){
+    if(!currentSwipeCard) return;
+    let cardRef=db.ref("users/"+currentSwipeCard.owner+"/cards/"+currentSwipeCard.cardId);
+    if(like) cardRef.child("likes").transaction(v=>(v||0)+1);
+    else cardRef.child("skipped").transaction(v=>(v||0)+1);
+    cardRef.child("seenBy").transaction(arr=>{ arr=arr||[]; if(!arr.includes(username)) arr.push(username); return arr; });
+    showNextCard();
+  }
 
-/* ---------- QUESTS ---------- */
-const questPaths=[
-  {name:'Card Collector', goals:[10,25,50,100,250], reward:[1,2,3,5,10]},
-  {name:'Popular Creator', goals:[5,10,30,50,100,500], reward:[1,2,5,10,20,50]},
-  {name:'View Master', goals:[100,200,500,1000,5000], reward:[1,2,5,10,20]}
-];
-
-function showQuests(){
-  document.getElementById('mainMenu').style.display='none';
-  document.getElementById('createCardScreen').style.display='none';
-  document.getElementById('swipeScreen').style.display='none';
-  document.getElementById('questsScreen').style.display='block';
-  updateQuests();
-}
-
-function updateQuests(){
-  let container=document.getElementById('questsContainer');
-  container.innerHTML='';
-  questPaths.forEach(p=>{
-    let div=document.createElement('div'); div.className='questPath';
-    div.innerHTML=`<strong>${p.name}</strong>`;
-    p.goals.forEach((g,i)=>{
-      let done=false;
-      if(p.name==='Card Collector') done=currentCards.length>=g;
-      if(p.name==='Popular Creator') done=currentCards.reduce((a,c)=>a+c.likes,0)>=g;
-      if(p.name==='View Master') done=currentCards.reduce((a,c)=>a+c.views,0)>=g;
-      div.innerHTML+=`<div class="quest">${g} - ${done?'✅':'❌'} (+${p.reward[i]} coin)</div>`;
-      if(done && !p.claimed) { coins+=p.reward[i]; p.claimed=true; saveUser(); }
+  function loadQuests(){
+    db.ref("users/"+username).once("value").then(snap=>{
+      let data=snap.val()||{};
+      let cards=data.cards||{};
+      let totalCards=Object.keys(cards).length;
+      let totalLikes=0,totalViews=0;
+      for(let id in cards){ totalLikes+=(cards[id].likes||0); totalViews+=(cards[id].views||0); }
+      let userQuests=data.quests||{};
+      let div=document.getElementById("quests");
+      div.innerHTML="";
+      function renderPath(path,label,progress){
+        div.innerHTML+=`<h3>${label}</h3>`;
+        for(let q of questsConfig[path]){
+          let done=userQuests[q.id];
+          let eligible=progress>=q.goal;
+          let cls=done?"quest completed":"quest";
+          div.innerHTML+=`<div class="${cls}">
+            <b>${label} ${q.goal}</b> → Reward: ${q.reward} coins 
+            ${done?"✅":" "+(eligible?`<button onclick="claimQuest('${q.id}',${q.reward})">Claim</button>`:"")}
+          </div>`;
+        }
+      }
+      renderPath("cards","Cards Created",totalCards);
+      renderPath("likes","Likes Gained",totalLikes);
+      renderPath("views","Views Gained",totalViews);
     });
-    container.appendChild(div);
-  });
-  document.getElementById('coinsDisplay').innerText='Coins: '+coins;
-}
+  }
+
+  function claimQuest(id,reward){
+    db.ref("users/"+username+"/quests/"+id).set(true);
+    coins+=reward;
+    db.ref("users/"+username+"/coins").set(coins);
+    loadQuests();
+  }
 </script>
 </body>
 </html>
