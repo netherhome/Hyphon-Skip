@@ -4,46 +4,281 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hyphon Skip</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script src="firebase-config.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+body { margin:0; font-family:'Quicksand', sans-serif; background:white; text-align:center; overflow-x:hidden; }
+h1,h2,h3,h4,h5,h6 { margin:0; }
+button { cursor:pointer; border:none; border-radius:15px; padding:15px 25px; font-weight:700; transition: transform 0.2s; }
+button:hover { transform: scale(1.05); }
+.hidden { display:none; }
+
+/* Logo */
+#logo { font-size:2.5em; margin:20px; }
+#logo .white { color:white; background:black; padding:0 10px; border-radius:5px; }
+#logo .red { color:red; }
+
+/* Top nav always visible */
+nav { display:flex; justify-content:center; margin-bottom:10px; position:sticky; top:0; background:white; z-index:1000; padding:10px; }
+nav button { margin:0 10px; background:#74c0fc; color:white; font-size:1em; }
+
+/* Login */
+#loginScreen { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; animation: fadeIn 0.5s; }
+#loginScreen input { padding:15px; margin:5px 0; font-size:1em; width:250px; border-radius:12px; border:1px solid #ccc; }
+#loginScreen button { background: #ff4d4d; color:white; font-size:1.2em; width:200px; }
+
+/* Main menu */
+#mainMenu { padding:20px; display:none; animation: fadeIn 0.5s; }
+.menu-btn { display:block; margin:20px auto; background:linear-gradient(45deg, #ff6b6b, #f06595); color:white; font-size:1.5em; width:80%; max-width:400px; }
+#cardList { max-height:300px; overflow-y:auto; margin-top:20px; }
+.card { border-radius:15px; padding:15px; margin:10px auto; max-width:400px; background:#f0f0f0; box-shadow:0 4px 6px rgba(0,0,0,0.1); position:relative; transition:0.4s; }
+.card img, .card video, .card audio { max-width:100%; border-radius:10px; margin-top:10px; }
+
+/* Swipe card screen */
+#swipeScreen { display:none; margin-top:10px; }
+#swipeCardContainer { position:relative; margin:0 auto; width:90%; max-width:500px; height:60vh; display:flex; align-items:center; justify-content:center; }
+#swipeCardContainer .swipeCard { position:absolute; width:100%; height:auto; padding:20px; background:#fff; border-radius:20px; box-shadow:0 6px 15px rgba(0,0,0,0.2); font-size:1.5em; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; transition:0.3s; }
+.swipeCard img, .swipeCard video, .swipeCard audio { max-width:100%; margin-top:15px; border-radius:12px; }
+
+/* Swipe buttons */
+#swipeButtons { display:flex; justify-content:center; margin-top:10px; }
+.swipe-btn { font-size:2em; width:45%; margin:5px; padding:20px; font-weight:700; border-radius:20px; transition: transform 0.2s; }
+.swipe-btn:hover { transform:scale(1.05); }
+.like-btn { background:green; color:white; }
+.pass-btn { background:red; color:white; }
+
+/* Boost sparkle */
+.boosted { position:relative; }
+.boosted::after {
+  content:'✨'; position:absolute; top:-10px; right:-10px; font-size:1.5em; animation: sparkle 1s infinite alternate;
+}
+@keyframes sparkle { 0%{opacity:0.5;} 50%{opacity:1; transform:rotate(15deg);} 100%{opacity:0.5;} }
+
+/* Quests */
+#questsScreen { max-width:500px; margin:0 auto; display:none; }
+.questPath { margin:15px 0; padding:10px; background:#ffe066; border-radius:10px; }
+.quest { margin:5px 0; font-weight:600; }
+
+/* Coins */
+#coinsDisplay { font-weight:700; margin-top:10px; }
+
+/* Animations */
+@keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+@keyframes slideRight { 0%{transform:translateX(0);opacity:1;} 100%{transform:translateX(500px);opacity:0;} }
+@keyframes slideLeft { 0%{transform:translateX(0);opacity:1;} 100%{transform:translateX(-500px);opacity:0;} }
+</style>
 </head>
 <body>
-<div id="login-screen" class="screen">
-    <div class="logo"><span class="white-text">Hyphon</span><span class="red-text">Skip</span></div>
-    <input type="text" id="username" placeholder="Username">
-    <button id="loginBtn">Login</button>
+
+<div id="logo"><span class="white">Hyphon</span> <span class="red">Skip</span></div>
+
+<!-- Login -->
+<div id="loginScreen">
+  <input type="text" id="usernameInput" placeholder="Username"><br>
+  <button id="loginBtn">Login</button>
 </div>
 
-<div id="main-screen" class="screen hidden">
-    <div class="top-nav">
-        <button class="tab-btn" data-tab="cards-tab">Create Cards</button>
-        <button class="tab-btn" data-tab="scroll-tab">Scroll Cards</button>
-        <button class="tab-btn" data-tab="quests-tab">Quests</button>
-    </div>
-
-    <div id="cards-tab" class="tab">
-        <h2>Create a Card</h2>
-        <textarea id="card-text" placeholder="Write something..."></textarea>
-        <input type="file" id="card-media" accept="image/*,video/*,audio/*">
-        <button id="createCardBtn">Create Card</button>
-        <h3>Your Cards</h3>
-        <div id="user-cards" class="card-list"></div>
-    </div>
-
-    <div id="scroll-tab" class="tab hidden">
-        <h2>Swipe Cards</h2>
-        <div id="swipe-area"></div>
-    </div>
-
-    <div id="quests-tab" class="tab">
-        <h2>Quests</h2>
-        <div id="quests-list"></div>
-        <h3>Coins: <span id="coin-count">0</span></h3>
-    </div>
+<!-- Main menu -->
+<div id="mainMenu">
+  <button class="menu-btn" onclick="showCreateCard()">Create Card</button>
+  <div id="coinsDisplay">Coins: 0</div>
+  <div id="cardList"></div>
 </div>
 
-<script src="app.js"></script>
+<!-- Create card -->
+<div id="createCardScreen" style="display:none; padding:20px;">
+  <h2>Create a Card</h2>
+  <textarea id="cardText" placeholder="Write something..." rows="3" style="width:80%; padding:10px; border-radius:12px; border:1px solid #ccc;"></textarea><br>
+  <input type="file" id="mediaInput" accept="image/*,video/*,audio/*"><br><br>
+  <button onclick="addCard(false)">Add Card</button>
+  <button onclick="addCard(true)">Add & Boost (1 coin) ✨</button>
+</div>
+
+<!-- Swipe cards -->
+<div id="swipeScreen">
+  <div id="swipeCardContainer"></div>
+  <div id="swipeButtons">
+    <button class="swipe-btn pass-btn" onclick="swipe('pass')">Pass ❌</button>
+    <button class="swipe-btn like-btn" onclick="swipe('like')">Like ✅</button>
+  </div>
+</div>
+
+<!-- Quests -->
+<div id="questsScreen">
+  <h2>Quests</h2>
+  <div id="questsContainer"></div>
+</div>
+
+<!-- Top nav -->
+<nav>
+  <button onclick="showMenu()">Home</button>
+  <button onclick="showQuests()">Quests</button>
+  <button onclick="startSwipe()">Scroll Cards</button>
+</nav>
+
+<script>
+let username='';
+let users=JSON.parse(localStorage.getItem('users')||'{}');
+let currentCards=[];
+let coins=0;
+
+/* ---------- LOGIN ---------- */
+document.getElementById('loginBtn').addEventListener('click', function(){
+  let input=document.getElementById('usernameInput').value.trim();
+  if(!input) return alert('Enter a username!');
+  username=input;
+  if(!users[username]) users[username]={cards:[], coins:0};
+  currentCards=users[username].cards;
+  coins=users[username].coins||0;
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('mainMenu').style.display='block';
+  renderCards();
+  document.getElementById('coinsDisplay').innerText='Coins: '+coins;
+});
+
+/* ---------- SAVE USER ---------- */
+function saveUser(){
+  users[username]={cards:currentCards, coins:coins};
+  localStorage.setItem('users', JSON.stringify(users));
+}
+
+/* ---------- MENU ---------- */
+function showMenu(){
+  document.getElementById('mainMenu').style.display='block';
+  document.getElementById('createCardScreen').style.display='none';
+  document.getElementById('swipeScreen').style.display='none';
+  document.getElementById('questsScreen').style.display='none';
+  renderCards();
+  document.getElementById('coinsDisplay').innerText='Coins: '+coins;
+}
+
+/* ---------- CREATE CARD ---------- */
+function showCreateCard(){
+  document.getElementById('mainMenu').style.display='none';
+  document.getElementById('createCardScreen').style.display='block';
+}
+
+function addCard(boost){
+  let text=document.getElementById('cardText').value.trim();
+  if(!text) return alert('Write something!');
+  if(boost && coins<1) { alert('Not enough coins!'); boost=false; }
+  let file=document.getElementById('mediaInput').files[0];
+  let reader=new FileReader();
+  reader.onload=function(e){
+    let media=file?{type:file.type, src:e.target.result}:null;
+    let card = {text, media, likes:0, views:0, skipped:0, boosted:boost};
+    currentCards.push(card);
+    if(boost) { coins--; alert('Card boosted!'); }
+    saveUser();
+    document.getElementById('cardText').value='';
+    document.getElementById('mediaInput').value='';
+    updateQuests();
+    showMenu();
+  };
+  if(file) reader.readAsDataURL(file);
+  else reader.onload();
+}
+
+/* ---------- RENDER CARDS ---------- */
+function renderCards(){
+  let list=document.getElementById('cardList');
+  list.innerHTML='';
+  currentCards.forEach((c,i)=>{
+    let div=document.createElement('div');
+    div.className='card'+(c.boosted?' boosted':'');
+    div.innerHTML=`<strong>Card ${i+1}:</strong> ${c.text}<div class="stats">Likes: ${c.likes} | Views: ${c.views} | Ratio: ${(c.likes/(c.skipped+1)).toFixed(2)}</div>`;
+    if(c.media){
+      if(c.media.type.startsWith('image')) div.innerHTML+=`<img src="${c.media.src}">`;
+      else if(c.media.type.startsWith('video')) div.innerHTML+=`<video controls src="${c.media.src}"></video>`;
+      else if(c.media.type.startsWith('audio')) div.innerHTML+=`<audio controls src="${c.media.src}"></audio>`;
+    }
+    list.appendChild(div);
+  });
+}
+
+/* ---------- SWIPE ---------- */
+let swipeQueue=[];
+let currentSwipeCard=null;
+
+function startSwipe(){
+  document.getElementById('mainMenu').style.display='none';
+  document.getElementById('createCardScreen').style.display='none';
+  document.getElementById('swipeScreen').style.display='block';
+  swipeQueue=[];
+  for(let u in users){
+    if(u===username) continue;
+    users[u].cards.forEach(c=>{
+      if(!c.seenBy) c.seenBy=[];
+      if(!c.seenBy.includes(username)){
+        let cardCopy={...c, owner:u};
+        if(c.boosted) swipeQueue.unshift(cardCopy);
+        else swipeQueue.push(cardCopy);
+      }
+    });
+  }
+  showNextCard();
+}
+
+function showNextCard(){
+  let container=document.getElementById('swipeCardContainer');
+  container.innerHTML='';
+  if(swipeQueue.length===0){ container.innerHTML='No more cards!'; return; }
+  currentSwipeCard=swipeQueue.shift();
+  currentSwipeCard.views++;
+  saveUser();
+
+  let div=document.createElement('div');
+  div.className='swipeCard'+(currentSwipeCard.boosted?' boosted':'');
+  div.innerHTML=`<p>${currentSwipeCard.text}</p>`;
+  if(currentSwipeCard.media){
+    if(currentSwipeCard.media.type.startsWith('image')) div.innerHTML+=`<img src="${currentSwipeCard.media.src}">`;
+    else if(currentSwipeCard.media.type.startsWith('video')) div.innerHTML+=`<video controls src="${currentSwipeCard.media.src}"></video>`;
+    else if(currentSwipeCard.media.type.startsWith('audio')) div.innerHTML+=`<audio controls src="${currentSwipeCard.media.src}"></audio>`;
+  }
+  container.appendChild(div);
+}
+
+/* ---------- Swipe buttons ---------- */
+function swipe(action){
+  if(!currentSwipeCard) return;
+  let div=document.querySelector('#swipeCardContainer .swipeCard');
+  if(action==='like'){ currentSwipeCard.likes++; coins++; div.style.animation='slideRight 0.4s forwards'; }
+  else { currentSwipeCard.skipped++; div.style.animation='slideLeft 0.4s forwards'; }
+  setTimeout(()=>{ showNextCard(); document.getElementById('coinsDisplay').innerText='Coins: '+coins; saveUser(); },400);
+}
+
+/* ---------- QUESTS ---------- */
+const questPaths=[
+  {name:'Card Collector', goals:[10,25,50,100,250], reward:[1,2,3,5,10]},
+  {name:'Popular Creator', goals:[5,10,30,50,100,500], reward:[1,2,5,10,20,50]},
+  {name:'View Master', goals:[100,200,500,1000,5000], reward:[1,2,5,10,20]}
+];
+
+function showQuests(){
+  document.getElementById('mainMenu').style.display='none';
+  document.getElementById('createCardScreen').style.display='none';
+  document.getElementById('swipeScreen').style.display='none';
+  document.getElementById('questsScreen').style.display='block';
+  updateQuests();
+}
+
+function updateQuests(){
+  let container=document.getElementById('questsContainer');
+  container.innerHTML='';
+  questPaths.forEach(p=>{
+    let div=document.createElement('div'); div.className='questPath';
+    div.innerHTML=`<strong>${p.name}</strong>`;
+    p.goals.forEach((g,i)=>{
+      let done=false;
+      if(p.name==='Card Collector') done=currentCards.length>=g;
+      if(p.name==='Popular Creator') done=currentCards.reduce((a,c)=>a+c.likes,0)>=g;
+      if(p.name==='View Master') done=currentCards.reduce((a,c)=>a+c.views,0)>=g;
+      div.innerHTML+=`<div class="quest">${g} - ${done?'✅':'❌'} (+${p.reward[i]} coin)</div>`;
+      if(done && !p.claimed) { coins+=p.reward[i]; p.claimed=true; saveUser(); }
+    });
+    container.appendChild(div);
+  });
+  document.getElementById('coinsDisplay').innerText='Coins: '+coins;
+}
+</script>
 </body>
 </html>
