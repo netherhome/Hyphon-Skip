@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hyphon Skip</title>
 <style>
-/* --- CSS --- */
 body { margin:0; font-family:'Comic Sans MS',Arial,sans-serif; background:#fff; color:#333; }
 .screen { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; }
 .hidden { display:none; }
@@ -29,11 +28,50 @@ button:hover { transform:scale(1.05); }
 @keyframes pop { 0%{transform:scale(1.2);} 50%{transform:scale(0.95);} 100%{transform:scale(1);} }
 .swipe-card img, .swipe-card video, .swipe-card audio { max-width:90%; max-height:200px; border-radius:15px; margin-top:10px; }
 </style>
+</head>
+<body>
+
+<div id="login-screen" class="screen">
+    <div class="logo"><span class="white-text">Hyphon</span><span class="red-text">Skip</span></div>
+    <input type="text" id="username" placeholder="Username">
+    <button id="loginBtn">Login</button>
+</div>
+
+<div id="main-screen" class="screen hidden">
+    <div class="top-nav">
+        <button class="tab-btn" data-tab="cards-tab">Create Cards</button>
+        <button class="tab-btn" data-tab="scroll-tab">Scroll Cards</button>
+        <button class="tab-btn" data-tab="quests-tab">Quests</button>
+    </div>
+
+    <div id="cards-tab" class="tab">
+        <h2>Create a Card</h2>
+        <textarea id="card-text" placeholder="Write something..."></textarea>
+        <input type="file" id="card-media" accept="image/*,video/*,audio/*">
+        <button id="createCardBtn">Create Card</button>
+        <h3>Your Cards</h3>
+        <div id="user-cards" class="card-list"></div>
+    </div>
+
+    <div id="scroll-tab" class="tab hidden">
+        <h2>Swipe Cards</h2>
+        <div id="swipe-area"></div>
+    </div>
+
+    <div id="quests-tab" class="tab">
+        <h2>Quests</h2>
+        <div id="quests-list"></div>
+        <h3>Coins: <span id="coin-count">0</span></h3>
+    </div>
+</div>
+
+<!-- Firebase Scripts -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  // --- Firebase config ---
+window.onload = function() {
+  // Firebase Init
   const firebaseConfig = {
     apiKey: "AIzaSyBnxa5QbhfrD_8LTrZbrmjI5wVRKHSXGLg",
     authDomain: "gartictwo.firebaseapp.com",
@@ -46,64 +84,56 @@ document.addEventListener('DOMContentLoaded', () => {
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  let currentUser = null;
-  let userData = {cards:[], coins:0, quests:{}};
-  let swipeQueue = [];
+  // Variables
+  let currentUser=null, userData={cards:[], coins:0, quests:{}}, swipeQueue=[];
 
+  // Elements
   const loginBtn = document.getElementById("loginBtn");
   const usernameInput = document.getElementById("username");
 
-  // --- LOGIN ---
-  function login() {
-    const username = usernameInput.value.trim();
-    if(!username) return alert("Enter a username");
-    currentUser = username;
-    db.ref('users/' + username).once('value').then(snapshot => {
-      if(snapshot.exists()) userData = snapshot.val();
-      else { userData={cards:[], coins:0, quests:{}}; db.ref('users/'+username).set(userData);}
-      document.getElementById("login-screen").classList.add("hidden");
-      document.getElementById("main-screen").classList.remove("hidden");
-      renderCards(); renderQuests(); renderCoins(); loadSwipeQueue();
-    });
-  }
-  loginBtn.addEventListener('click', login);
-
-  // --- TABS ---
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
-      document.getElementById(btn.dataset.tab).classList.remove('hidden');
-    });
+  // Login Button
+  loginBtn.addEventListener('click', function() {
+      const username = usernameInput.value.trim();
+      if(!username) return alert("Enter a username");
+      currentUser = username;
+      db.ref('users/'+username).once('value').then(snapshot=>{
+          if(snapshot.exists()) userData = snapshot.val();
+          else { userData={cards:[], coins:0, quests:{}}; db.ref('users/'+username).set(userData);}
+          document.getElementById("login-screen").classList.add("hidden");
+          document.getElementById("main-screen").classList.remove("hidden");
+          renderCards(); renderQuests(); renderCoins(); loadSwipeQueue();
+      });
   });
 
-  // --- CREATE CARD ---
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.add('hidden')); document.getElementById(btn.dataset.tab).classList.remove('hidden');});
+  });
+
+  // Card creation
   document.getElementById("createCardBtn").addEventListener('click',()=>{
     const text=document.getElementById("card-text").value.trim();
     const file=document.getElementById("card-media").files[0];
-    if(!text&&!file)return alert("Add text or media");
+    if(!text&&!file) return alert("Add text or media");
     const card={text,media:null,likes:0,views:0,created:Date.now(),boosted:false};
     if(file){const reader=new FileReader(); reader.onload=e=>{card.media=e.target.result; userData.cards.push(card); saveData(); renderCards(); checkQuests(); loadSwipeQueue();}; reader.readAsDataURL(file);}
     else{userData.cards.push(card); saveData(); renderCards(); checkQuests(); loadSwipeQueue();}
   });
 
-  // --- RENDER CARDS ---
+  // Render Cards
   function renderCards(){
     const container=document.getElementById("user-cards"); container.innerHTML='';
     userData.cards.forEach((c,i)=>{
       const div=document.createElement('div'); div.className='card';
-      div.innerHTML=`<strong>Text:</strong> ${c.text||''}<br>${c.media?`<div class="card-media">${renderMedia(c.media)}</div>`:''}<small>Likes: ${c.likes} Views: ${c.views}</small><br><button onclick="boostCard(${i})">Boost (1 coin)</button>`;
+      div.innerHTML=`<strong>Text:</strong> ${c.text||''}<br>${c.media?renderMedia(c.media):''}<br><small>Likes: ${c.likes} Views: ${c.views}</small><br><button onclick="boostCard(${i})">Boost (1 coin)</button>`;
       container.appendChild(div);
     });
   }
 
-  // --- BOOST ---
-  window.boostCard = function(index){
-    if(userData.coins<1)return alert("Not enough coins!");
-    userData.coins-=1; userData.cards[index].boosted=true;
-    saveData(); renderCoins(); renderCards(); loadSwipeQueue();
-  }
+  // Boost card
+  window.boostCard = function(index){if(userData.coins<1)return alert("Not enough coins!"); userData.coins-=1; userData.cards[index].boosted=true; saveData(); renderCoins(); renderCards(); loadSwipeQueue();}
 
-  // --- MEDIA RENDER ---
+  // Media renderer
   function renderMedia(data){
     if(data.startsWith('data:image')) return `<img src="${data}" class="card-media">`;
     if(data.startsWith('data:video')) return `<video src="${data}" class="card-media" controls></video>`;
@@ -111,22 +141,20 @@ document.addEventListener('DOMContentLoaded', () => {
     return '';
   }
 
-  // --- SAVE DATA ---
-  function saveData(){ db.ref('users/'+currentUser).set(userData); }
+  function saveData(){db.ref('users/'+currentUser).set(userData);}
 
-  // --- QUESTS ---
+  // Quests
   const quests=[
     {path:1,goals:[10,25,50,100,250],coins:[1,2,3,5,10],key:'cards'},
     {path:2,goals:[5,10,30,50,100,500],coins:[1,2,3,5,10,20],key:'likes'},
     {path:3,goals:[10,40,50,200,500],coins:[1,2,3,5,10],key:'views'}
   ];
-
   function renderQuests(){const container=document.getElementById("quests-list"); container.innerHTML=''; quests.forEach(q=>{const div=document.createElement('div'); div.innerHTML=`<h4>Path ${q.path}</h4>`; q.goals.forEach((g,i)=>{const achieved=checkQuestProgress(q.key,g); div.innerHTML+=`<div>${g} ${q.key} - ${achieved?'✅':'❌'} - Reward: ${q.coins[i]} coins</div>`;}); container.appendChild(div);});}
   function renderCoins(){document.getElementById("coin-count").textContent=userData.coins;}
   function checkQuestProgress(key,goal){let val=0;if(key=='cards') val=userData.cards.length;if(key=='likes') val=userData.cards.reduce((a,b)=>a+b.likes,0);if(key=='views') val=userData.cards.reduce((a,b)=>a+b.views,0);return val>=goal;}
   function checkQuests(){quests.forEach(q=>{q.goals.forEach((g,i)=>{const id=`${q.key}-${g}`; if(checkQuestProgress(q.key,g)&&!userData.quests[id]){userData.quests[id]=true; userData.coins+=q.coins[i]; renderCoins(); saveData();}});});}
 
-  // --- SWIPE SYSTEM ---
+  // Swipe system
   function loadSwipeQueue(){
     db.ref('users').once('value').then(snapshot=>{
       swipeQueue=[]; snapshot.forEach(userSnap=>{if(userSnap.key===currentUser)return; const cards=userSnap.val().cards||[]; cards.forEach(c=>{swipeQueue.push({...c,owner:userSnap.key});});});
@@ -136,91 +164,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderNextSwipe(){
     const area=document.getElementById("swipe-area"); area.innerHTML=''; if(swipeQueue.length===0){area.innerHTML="No more cards!"; return;}
-    const card=swipeQueue.shift(); card.views++; if(card.boosted) card.boosted=false;
+    const card=swipeQueue.shift(); card.views++;
     db.ref('users/'+card.owner+'/cards').once('value').then(snapshot=>{snapshot.forEach((snap,index)=>{if(snap.val().created===card.created) db.ref(`users/${card.owner}/cards/${index}/views`).set(card.views);});});
-    const div=document.createElement('div'); div.className='swipe-card'; if(card.boosted) div.classList.add('boosted');
-    div.innerHTML=`<strong>${card.text||''}</strong><br>${card.media?renderMedia(card.media):''}`;
+    const div=document.createElement('div'); div.className='swipe-card'; if(card.boosted) div.classList.add('boosted'); div.innerHTML=`<strong>${card.text||''}</strong><br>${card.media?renderMedia(card.media):''}`;
     area.appendChild(div);
-
-    let startX=0,offsetX=0,isDragging=false;
-    div.onpointerdown=e=>{startX=e.clientX; div.setPointerCapture(e.pointerId);
-    div.classList.add('dragging'); offsetX=0; isDragging=true;};
-
-    div.onpointermove=e=>{
-      if(!isDragging) return;
-      offsetX = e.clientX - startX;
-      div.style.transform = `translateX(${offsetX}px) rotate(${offsetX/10}deg)`;
-      if(offsetX > 50) div.classList.add('like'); else div.classList.remove('like');
-      if(offsetX < -50) div.classList.add('skip'); else div.classList.remove('skip');
-    };
-
-    div.onpointerup=e=>{
-      div.classList.remove('dragging');
-      isDragging = false;
-      if(offsetX > 100){
-        div.style.transform='translateX(120%) rotate(20deg)';
-        likeCard(card);
-        setTimeout(renderNextSwipe, 300);
-      } else if(offsetX < -100){
-        div.style.transform='translateX(-120%) rotate(-20deg)';
-        setTimeout(renderNextSwipe, 300);
-      } else {
-        div.style.transform='translateX(0) rotate(0deg)';
-        div.classList.remove('like','skip');
-      }
-    };
+    let startX=0, offsetX=0, isDragging=false;
+    div.onpointerdown=e=>{startX=e.clientX; div.setPointerCapture(e.pointerId); div.classList.add('dragging'); offsetX=0; isDragging=true;};
+    div.onpointermove=e=>{if(!isDragging) return; offsetX=e.clientX-startX; div.style.transform=`translateX(${offsetX}px) rotate(${offsetX/10}deg)`; if(offsetX>50) div.classList.add('like'); else div.classList.remove('like'); if(offsetX<-50) div.classList.add('skip'); else div.classList.remove('skip');};
+    div.onpointerup=e=>{div.classList.remove('dragging'); isDragging=false; if(offsetX>100){div.style.transform='translateX(120%) rotate(20deg)'; likeCard(card); setTimeout(renderNextSwipe,300);} else if(offsetX<-100){div.style.transform='translateX(-120%) rotate(-20deg)'; setTimeout(renderNextSwipe,300);} else{div.style.transform='translateX(0) rotate(0deg)'; div.classList.remove('like','skip');}};
   }
 
-  // --- LIKE CARD ---
   function likeCard(card){
-    db.ref('users/'+card.owner+'/cards').once('value').then(snapshot=>{
-      snapshot.forEach((snap,index)=>{
-        if(snap.val().created===card.created){
-          const newLikes = (snap.val().likes||0) + 1;
-          db.ref(`users/${card.owner}/cards/${index}/likes`).set(newLikes);
-          checkQuests();
-          loadSwipeQueue();
-        }
-      });
-    });
+    db.ref('users/'+card.owner+'/cards').once('value').then(snapshot=>{snapshot.forEach((snap,index)=>{if(snap.val().created===card.created){const newLikes=(snap.val().likes||0)+1; db.ref(`users/${card.owner}/cards/${index}/likes`).set(newLikes); checkQuests(); loadSwipeQueue();}});});
   }
-
-});
+};
 </script>
-</head>
-<body>
-  <div id="login-screen" class="screen">
-      <div class="logo"><span class="white-text">Hyphon</span><span class="red-text">Skip</span></div>
-      <input type="text" id="username" placeholder="Username">
-      <button id="loginBtn">Login</button>
-  </div>
-
-  <div id="main-screen" class="screen hidden">
-      <div class="top-nav">
-          <button class="tab-btn" data-tab="cards-tab">Create Cards</button>
-          <button class="tab-btn" data-tab="scroll-tab">Scroll Cards</button>
-          <button class="tab-btn" data-tab="quests-tab">Quests</button>
-      </div>
-
-      <div id="cards-tab" class="tab">
-          <h2>Create a Card</h2>
-          <textarea id="card-text" placeholder="Write something..."></textarea>
-          <input type="file" id="card-media" accept="image/*,video/*,audio/*">
-          <button id="createCardBtn">Create Card</button>
-          <h3>Your Cards</h3>
-          <div id="user-cards" class="card-list"></div>
-      </div>
-
-      <div id="scroll-tab" class="tab hidden">
-          <h2>Swipe Cards</h2>
-          <div id="swipe-area"></div>
-      </div>
-
-      <div id="quests-tab" class="tab">
-          <h2>Quests</h2>
-          <div id="quests-list"></div>
-          <h3>Coins: <span id="coin-count">0</span></h3>
-      </div>
-  </div>
 </body>
 </html>
