@@ -10,7 +10,7 @@
   header { display:flex; justify-content:space-around; background:#f4f4f4; padding:10px; position:sticky; top:0; z-index:10; box-shadow:0 2px 4px rgba(0,0,0,0.1);}
   header button { flex:1; margin:5px; padding:15px; font-size:18px; border:none; border-radius:10px; cursor:pointer; transition: transform 0.2s ease; }
   header button:hover { transform: scale(1.05); }
-  #homeBtn { background: #ffcc00; } #questsBtn { background:#00c2ff;} #scrollBtn { background:#ff6666;}
+  #homeBtn { background: #ffcc00; } #scrollBtn { background:#ff6666; } #loginBtn { background:#00c2ff; color:white;}
   .screen { display:none; padding:20px; }
   .active { display:block; }
   .card { background:#fafafa; border-radius:15px; padding:20px; margin:20px auto; width:80%; max-width:400px; box-shadow:0 4px 12px rgba(0,0,0,0.15); font-size:20px; transition: transform 0.3s ease, opacity 0.3s ease; }
@@ -18,16 +18,14 @@
   .bigBtn:hover { transform:scale(1.05); }
   #passBtn { background:#ff4444; color:white; } #likeBtn { background:#44cc44; color:white; }
   .stats { font-size:16px; color:#555; margin-top:10px; }
-  .quest { margin:15px; padding:10px; border-radius:10px; background:#e0f7fa; }
   #loginScreen { display:flex; justify-content:center; align-items:center; height:100vh; flex-direction:column; }
   #loginScreen input, #loginScreen button { font-size:20px; padding:15px; margin:10px; border-radius:10px; border:none; }
-  #loginBtn { background:#00c2ff; color:white; cursor:pointer; }
 </style>
 </head>
 <body>
 
 <div id="loginScreen">
-  <h1><span style="color:white;background:black;padding:5px;border-radius:5px;">Hyphon</span> <span style="color:red;">Skip</span></h1>
+  <h1><span style="color:black;background:white;padding:5px;border-radius:5px;">Hyphon</span> <span style="color:red;">Skip</span></h1>
   <input id="usernameInput" placeholder="Enter username...">
   <button id="loginBtn">Login</button>
 </div>
@@ -35,7 +33,6 @@
 <div id="app" style="display:none;">
   <header>
     <button id="homeBtn">Home</button>
-    <button id="questsBtn">Quests</button>
     <button id="scrollBtn">Scroll</button>
   </header>
 
@@ -45,13 +42,8 @@
     <div id="myCards"></div>
   </div>
 
-  <div id="questsScreen" class="screen">
-    <h2>Quests</h2>
-    <div id="questsList"></div>
-  </div>
-
   <div id="scrollScreen" class="screen">
-    <h2>Swipe Cards</h2>
+    <h2>Scroll Cards</h2>
     <div id="cardContainer"></div>
     <div>
       <button id="passBtn" class="bigBtn">Pass</button>
@@ -61,7 +53,7 @@
 </div>
 
 <script>
-  // --- Firebase Setup (NEW DATABASE) ---
+  // --- Firebase Setup ---
   const firebaseConfig = {
     apiKey: "AIzaSyDIMxctRr3tYxb90o_dQRa4UArEr5uePYE",
     authDomain: "hyphonskip.firebaseapp.com",
@@ -87,7 +79,6 @@
     document.getElementById('app').style.display = 'block';
     document.getElementById('userDisplay').innerText = username;
     loadMyCards();
-    loadQuests();
     loadCards();
   };
 
@@ -97,17 +88,13 @@
     document.getElementById(id).classList.add('active');
   }
   document.getElementById('homeBtn').onclick = () => showScreen('homeScreen');
-  document.getElementById('questsBtn').onclick = () => showScreen('questsScreen');
   document.getElementById('scrollBtn').onclick = () => showScreen('scrollScreen');
 
   // --- Create Card ---
   function showCreateCard() {
     const text = prompt("Enter card text:");
     if (!text) return;
-    const newCardRef = db.ref("cards").push();
-    newCardRef.set({
-      text, username: currentUser, likes:0, views:0, created: Date.now()
-    });
+    db.ref("cards").push({ text, username: currentUser, likes:0, views:0, created: Date.now() });
     loadMyCards();
   }
 
@@ -123,24 +110,14 @@
     });
   }
 
-  // --- Quests (placeholder) ---
-  function loadQuests() {
-    const questsDiv = document.getElementById("questsList");
-    questsDiv.innerHTML = `
-      <div class="quest">Path 1: Create 10/25/50/100/250 cards</div>
-      <div class="quest">Path 2: Get 5/10/30/50/100/500 likes</div>
-      <div class="quest">Path 3: Get 40/50/200/500 views</div>
-    `;
-  }
-
   // --- Scroll Cards ---
   function loadCards() {
     db.ref("cards").on("value", snap => {
       cards = [];
       snap.forEach(c => {
-        let card = c.val();
+        const card = c.val();
         card.id = c.key;
-        if (card.username !== currentUser) cards.push(card);
+        if(card.username !== currentUser) cards.push(card);
       });
       currentIndex = 0;
       showCard();
@@ -150,15 +127,16 @@
   function showCard() {
     const container = document.getElementById("cardContainer");
     container.innerHTML = "";
-    if (currentIndex >= cards.length) {
+    if(currentIndex >= cards.length){
       container.innerHTML = "<p>No more cards!</p>";
       return;
     }
     const card = cards[currentIndex];
     const div = document.createElement("div");
     div.className = "card";
-    div.innerHTML = `<p>${card.text}</p>`;
+    div.innerHTML = `<p>${card.text}</p><div class="stats">👍 ${card.likes} | 👀 ${card.views}</div>`;
     container.appendChild(div);
+    // Increment views safely
     db.ref("cards/"+card.id+"/views").transaction(v => (v||0)+1);
   }
 
@@ -169,5 +147,6 @@
     currentIndex++; showCard();
   };
 </script>
+
 </body>
 </html>
