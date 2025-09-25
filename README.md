@@ -11,9 +11,11 @@ Once its downloaded, open the file and double click on Hyphon-Skip main, then do
 
 on the index.html file.
 
+-
 
 You are now in!
 
+-
 
 You can now bookmark it and log in.
 
