@@ -2,243 +2,172 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Hyphon Skip</title>
-<style>
-  body { font-family: 'Poppins', sans-serif; background:#fff; margin:0; padding:0; text-align:center; }
-  h1 { font-size:3em; margin:20px; }
-  h1 span { color:red; }
-  .hidden { display:none; }
-  .nav { display:flex; justify-content:space-around; background:#f1f1f1; padding:10px; position:sticky; top:0; z-index:10; }
-  .nav button { flex:1; margin:5px; font-size:1.2em; }
-  button { 
-    padding:20px; font-size:1.5em; margin:10px; border:none; border-radius:12px; cursor:pointer; 
-    transition:transform 0.2s, background 0.3s; width:90%; font-weight:bold;
-  }
-  button:hover { transform:scale(1.05); }
-  #loginBtn { background:#4CAF50; color:white; }
-  #passBtn { background:#e74c3c; color:white; }
-  #likeBtn { background:#2ecc71; color:white; }
-  #createBtn { background:#3498db; color:white; }
-  #boostBtn { background:#ff69b4; color:white; }
-  .card { border:2px solid #ddd; border-radius:15px; padding:20px; margin:15px auto; max-width:500px; box-shadow:0 4px 8px rgba(0,0,0,0.1); background:white; }
-  .swipeCard { border-radius:15px; padding:20px; margin:20px auto; max-width:500px; background:#fefefe; box-shadow:0 6px 12px rgba(0,0,0,0.2); animation: fadeIn 0.5s; font-size:1.3em; }
-  .boosted { color:#ff4500; font-weight:bold; }
-  @keyframes fadeIn { from {opacity:0; transform:scale(0.9);} to {opacity:1; transform:scale(1);} }
-  input, textarea { width:90%; padding:12px; margin:8px 0; border:2px solid #ccc; border-radius:8px; font-size:1em; }
-</style>
+<title>Hyphon <span style="color:red;">Skip</span></title>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+  body { font-family: 'Poppins', sans-serif; margin:0; padding:0; background:#fff; text-align:center; color:#333; }
+  header { display:flex; justify-content:space-around; background:#f4f4f4; padding:10px; position:sticky; top:0; z-index:10; box-shadow:0 2px 4px rgba(0,0,0,0.1);}
+  header button { flex:1; margin:5px; padding:15px; font-size:18px; border:none; border-radius:10px; cursor:pointer; transition: transform 0.2s ease; }
+  header button:hover { transform: scale(1.05); }
+  #homeBtn { background: #ffcc00; } #questsBtn { background:#00c2ff;} #scrollBtn { background:#ff6666;}
+  .screen { display:none; padding:20px; }
+  .active { display:block; }
+  .card { background:#fafafa; border-radius:15px; padding:20px; margin:20px auto; width:80%; max-width:400px; box-shadow:0 4px 12px rgba(0,0,0,0.15); font-size:20px; transition: transform 0.3s ease, opacity 0.3s ease; }
+  .bigBtn { width:45%; margin:10px; padding:20px; font-size:22px; border:none; border-radius:15px; cursor:pointer; transition: transform 0.2s ease; }
+  .bigBtn:hover { transform:scale(1.05); }
+  #passBtn { background:#ff4444; color:white; } #likeBtn { background:#44cc44; color:white; }
+  .stats { font-size:16px; color:#555; margin-top:10px; }
+  .quest { margin:15px; padding:10px; border-radius:10px; background:#e0f7fa; }
+  #loginScreen { display:flex; justify-content:center; align-items:center; height:100vh; flex-direction:column; }
+  #loginScreen input, #loginScreen button { font-size:20px; padding:15px; margin:10px; border-radius:10px; border:none; }
+  #loginBtn { background:#00c2ff; color:white; cursor:pointer; }
+</style>
 </head>
 <body>
-  <h1><span style="color:black">Hyphon</span> <span>Skip</span></h1>
-  
-  <!-- Login -->
-  <div id="loginScreen">
-    <input id="username" placeholder="Enter username">
-    <button id="loginBtn">Login</button>
-  </div>
-  
-  <!-- Navigation -->
-  <div class="nav hidden" id="navBar">
-    <button onclick="showSection('home')">Home</button>
-    <button onclick="showSection('swipe')">Scroll</button>
-    <button onclick="showSection('quests')">Quests</button>
-  </div>
-  
-  <!-- Home -->
-  <div id="home" class="hidden">
-    <button id="createBtn">Create Card</button>
-    <h3>My Cards</h3>
+
+<div id="loginScreen">
+  <h1><span style="color:white;background:black;padding:5px;border-radius:5px;">Hyphon</span> <span style="color:red;">Skip</span></h1>
+  <input id="usernameInput" placeholder="Enter username...">
+  <button id="loginBtn">Login</button>
+</div>
+
+<div id="app" style="display:none;">
+  <header>
+    <button id="homeBtn">Home</button>
+    <button id="questsBtn">Quests</button>
+    <button id="scrollBtn">Scroll</button>
+  </header>
+
+  <div id="homeScreen" class="screen active">
+    <h2>Welcome, <span id="userDisplay"></span>!</h2>
+    <button onclick="showCreateCard()">+ Create Card</button>
     <div id="myCards"></div>
   </div>
-  
-  <!-- Create Card -->
-  <div id="createCard" class="hidden">
-    <textarea id="cardText" placeholder="Write something..."></textarea>
-    <button onclick="submitCard()">Post Card</button>
-  </div>
-  
-  <!-- Swipe / Scroll -->
-  <div id="swipe" class="hidden">
-    <div id="swipeArea"></div>
-    <button id="passBtn">Pass</button>
-    <button id="likeBtn">Like!</button>
-  </div>
-  
-  <!-- Quests -->
-  <div id="quests" class="hidden">
+
+  <div id="questsScreen" class="screen">
     <h2>Quests</h2>
-    <h3 id="coinBalance">Coins: 0</h3>
-    <div id="questList"></div>
+    <div id="questsList"></div>
   </div>
-  
+
+  <div id="scrollScreen" class="screen">
+    <h2>Swipe Cards</h2>
+    <div id="cardContainer"></div>
+    <div>
+      <button id="passBtn" class="bigBtn">Pass</button>
+      <button id="likeBtn" class="bigBtn">Like!</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  // Firebase setup
+  // --- Firebase Setup (NEW DATABASE) ---
   const firebaseConfig = {
-    apiKey: "AIzaSyBnxa5QbhfrD_8LTrZbrmjI5wVRKHSXGLg",
-    authDomain: "gartictwo.firebaseapp.com",
-    databaseURL: "https://gartictwo-default-rtdb.firebaseio.com",
-    projectId: "gartictwo",
-    storageBucket: "gartictwo.firebasestorage.app",
-    messagingSenderId: "602694382683",
-    appId: "1:602694382683:web:1dc11cb6b715944ba0fb7e"
+    apiKey: "AIzaSyDIMxctRr3tYxb90o_dQRa4UArEr5uePYE",
+    authDomain: "hyphonskip.firebaseapp.com",
+    databaseURL: "https://hyphonskip-default-rtdb.firebaseio.com",
+    projectId: "hyphonskip",
+    storageBucket: "hyphonskip.firebasestorage.app",
+    messagingSenderId: "665576046305",
+    appId: "1:665576046305:web:f7b7a37a7be1d0c5b581a0"
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
   let currentUser = null;
-  let allCards = [];
-  let currentCardIndex = 0;
-  let userCoins = 0;
+  let cards = [];
+  let currentIndex = 0;
 
-  // Login
+  // --- Login ---
   document.getElementById('loginBtn').onclick = () => {
-    const user = document.getElementById('username').value.trim();
-    if(!user) return alert("Enter a username!");
-    currentUser = user;
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('navBar').classList.remove('hidden');
-    showSection('home');
-    initUser();
+    const username = document.getElementById('usernameInput').value.trim();
+    if (!username) return alert("Enter a username!");
+    currentUser = username;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('userDisplay').innerText = username;
     loadMyCards();
+    loadQuests();
     loadCards();
   };
 
-  function initUser(){
-    db.ref("users/"+currentUser).once("value").then(snap=>{
-      if(!snap.exists()){
-        db.ref("users/"+currentUser).set({ coins:0 });
-      }
-    });
-    db.ref("users/"+currentUser+"/coins").on("value", snap=>{
-      userCoins = snap.val()||0;
-      document.getElementById("coinBalance").innerText = "Coins: "+userCoins;
-    });
+  // --- Navigation ---
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
   }
+  document.getElementById('homeBtn').onclick = () => showScreen('homeScreen');
+  document.getElementById('questsBtn').onclick = () => showScreen('questsScreen');
+  document.getElementById('scrollBtn').onclick = () => showScreen('scrollScreen');
 
-  // Section switching
-  function showSection(id) {
-    ["home","createCard","swipe","quests"].forEach(s => document.getElementById(s).classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-    if(id==="swipe") loadNextCard();
-    if(id==="quests") loadQuests();
-  }
-
-  // Create card
-  document.getElementById('createBtn').onclick = () => showSection('createCard');
-
-  function submitCard(){
-    const text = document.getElementById('cardText').value;
-    if(!text) return alert("Enter text!");
-    const newCard = { user: currentUser, text, likes:0, views:0, skips:0, boost:false, created:Date.now() };
-    const newRef = db.ref("cards").push();
-    newRef.set(newCard);
-    document.getElementById('cardText').value = "";
-    alert("Card posted!");
-    showSection('home');
+  // --- Create Card ---
+  function showCreateCard() {
+    const text = prompt("Enter card text:");
+    if (!text) return;
+    const newCardRef = db.ref("cards").push();
+    newCardRef.set({
+      text, username: currentUser, likes:0, views:0, created: Date.now()
+    });
     loadMyCards();
   }
 
-  // Load my cards
-  function loadMyCards(){
-    db.ref("cards").orderByChild("user").equalTo(currentUser).on("value",snap=>{
-      const area = document.getElementById('myCards');
-      area.innerHTML = "";
-      snap.forEach(child=>{
-        const c = child.val();
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `<b>${c.text}</b><br>
-          Likes: ${c.likes||0} | Views: ${c.views||0} | Ratio: ${c.views ? ((c.likes/c.views)*100).toFixed(1)+"%" : "0%"}
-          <br> ${c.boost ? "<span class='boosted'>🔥 Boosted!</span>" : ""}
-          <br><button onclick="boostCard('${child.key}')">Boost (1 coin)</button>
-        `;
-        area.appendChild(div);
+  function loadMyCards() {
+    db.ref("cards").orderByChild("username").equalTo(currentUser).on("value", snap => {
+      const myCardsDiv = document.getElementById("myCards");
+      myCardsDiv.innerHTML = "";
+      snap.forEach(c => {
+        const card = c.val();
+        myCardsDiv.innerHTML += `<div class="card">${card.text}
+          <div class="stats">👍 ${card.likes} | 👀 ${card.views}</div></div>`;
       });
     });
   }
 
-  // Boost a card
-  function boostCard(cardId){
-    if(userCoins<=0) return alert("Not enough coins!");
-    db.ref("cards/"+cardId+"/boost").set(true);
-    db.ref("users/"+currentUser+"/coins").set(userCoins-1);
+  // --- Quests (placeholder) ---
+  function loadQuests() {
+    const questsDiv = document.getElementById("questsList");
+    questsDiv.innerHTML = `
+      <div class="quest">Path 1: Create 10/25/50/100/250 cards</div>
+      <div class="quest">Path 2: Get 5/10/30/50/100/500 likes</div>
+      <div class="quest">Path 3: Get 40/50/200/500 views</div>
+    `;
   }
 
-  // Load all cards for swiping
-  function loadCards(){
-    db.ref("cards").on("value", snap=>{
-      allCards = [];
-      snap.forEach(child=>{
-        const c = child.val(); 
-        c.key = child.key;
-        if(c.user!==currentUser) allCards.push(c);
+  // --- Scroll Cards ---
+  function loadCards() {
+    db.ref("cards").on("value", snap => {
+      cards = [];
+      snap.forEach(c => {
+        let card = c.val();
+        card.id = c.key;
+        if (card.username !== currentUser) cards.push(card);
       });
-      // Boosted cards come first
-      allCards.sort((a,b)=> (b.boost===true)-(a.boost===true) || a.created-b.created);
-      currentCardIndex = 0;
+      currentIndex = 0;
+      showCard();
     });
   }
 
-  function loadNextCard(){
-    const area = document.getElementById("swipeArea");
-    area.innerHTML = "";
-    if(currentCardIndex>=allCards.length){ 
-      area.innerHTML = "<p>No more cards!</p>"; return; 
+  function showCard() {
+    const container = document.getElementById("cardContainer");
+    container.innerHTML = "";
+    if (currentIndex >= cards.length) {
+      container.innerHTML = "<p>No more cards!</p>";
+      return;
     }
-    const c = allCards[currentCardIndex];
+    const card = cards[currentIndex];
     const div = document.createElement("div");
-    div.className="swipeCard";
-    div.innerHTML = `<p>${c.text}</p> ${c.boost ? "<p class='boosted'>🔥 Boosted!</p>" : ""}`;
-    area.appendChild(div);
-    db.ref("cards/"+c.key+"/views").set((c.views||0)+1);
+    div.className = "card";
+    div.innerHTML = `<p>${card.text}</p>`;
+    container.appendChild(div);
+    db.ref("cards/"+card.id+"/views").transaction(v => (v||0)+1);
   }
 
-  document.getElementById("passBtn").onclick = ()=>{ currentCardIndex++; loadNextCard(); };
-  document.getElementById("likeBtn").onclick = ()=>{
-    const c = allCards[currentCardIndex];
-    db.ref("cards/"+c.key+"/likes").set((c.likes||0)+1);
-    currentCardIndex++;
-    loadNextCard();
+  document.getElementById("passBtn").onclick = () => { currentIndex++; showCard(); };
+  document.getElementById("likeBtn").onclick = () => {
+    const card = cards[currentIndex];
+    db.ref("cards/"+card.id+"/likes").transaction(l => (l||0)+1);
+    currentIndex++; showCard();
   };
-
-  // Quests
-  function loadQuests(){
-    const q = document.getElementById("questList");
-    q.innerHTML = "";
-    Promise.all([
-      db.ref("cards").orderByChild("user").equalTo(currentUser).once("value"),
-      db.ref("cards").once("value")
-    ]).then(([mySnap, allSnap])=>{
-      let myCardsCount=0, likes=0, views=0;
-      mySnap.forEach(c=>{ 
-        myCardsCount++; 
-        likes+=(c.val().likes||0); 
-        views+=(c.val().views||0);
-      });
-
-      const quests = [
-        {text:"Reach 10 Cards", done: myCardsCount>=10, reward:1},
-        {text:"Get 10 Likes", done: likes>=10, reward:1},
-        {text:"Get 100 Views", done: views>=100, reward:2}
-      ];
-
-      quests.forEach((quest,i)=>{
-        const div=document.createElement("div");
-        div.innerHTML = `${quest.done?"✅":"⬜"} ${quest.text} (Reward: ${quest.reward} coins)`;
-        if(quest.done){
-          // Give coins only once
-          db.ref("users/"+currentUser+"/quest"+i).once("value").then(s=>{
-            if(!s.val()){
-              db.ref("users/"+currentUser+"/coins").set(userCoins+quest.reward);
-              db.ref("users/"+currentUser+"/quest"+i).set(true);
-            }
-          });
-        }
-        q.appendChild(div);
-      });
-    });
-  }
 </script>
 </body>
 </html>
